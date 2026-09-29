@@ -3,6 +3,6 @@ services:
     extends:
       file: compose.common.yaml
       service: runner
-    image: ${RUNNER_IMAGE:-ghcr.io/sigmalko/githab-runner-in-docker:latest}
+    image: ${RUNNER_IMAGE:-ghcr.io/sigmalko/github-runner-in-docker:latest}
 volumes:
   runner-data:

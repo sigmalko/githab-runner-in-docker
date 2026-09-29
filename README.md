@@ -78,12 +78,12 @@ and architecture arguments described in “Parameters”.
 `compose.image.yaml` defaults to this project's GitHub Container Registry image:
 
 ```dotenv
-RUNNER_IMAGE=ghcr.io/sigmalko/githab-runner-in-docker:latest
+RUNNER_IMAGE=ghcr.io/sigmalko/github-runner-in-docker:latest
 ```
 
 You can optionally set `RUNNER_IMAGE` in `.env` to override the default with a
 version tag, digest, or another compatible image. The image is built from
-[this repository](https://github.com/sigmalko/githab-runner-in-docker).
+[this repository](https://github.com/sigmalko/github-runner-in-docker).
 This setting is independent of `RUNNER_URL`, which identifies the repository
 accepting jobs and must be supplied by the user. The default reference must be
 published in GHCR before it can be pulled. Private images require registry login.
@@ -107,6 +107,35 @@ preserves its volume. Do not run both modes against the same registration at
 the same time. `compose.common.yaml` is a shared settings file, not a standalone
 deployment file. The Windows and Linux setup examples above use local building;
 replace their startup commands with the published-image commands when desired.
+
+## Publishing the image to GHCR
+
+The `Build and publish runner image` workflow builds the Dockerfile on
+GitHub-hosted Linux runners, so it does not depend on this self-hosted runner
+being available. It uses the Dockerfile defaults and publishes `linux/amd64`
+images, suitable for x86-64 Linux hosts and Docker Desktop using Linux containers.
+ARM64 publishing is not enabled by this workflow.
+
+- Pushes to `main` publish `latest` and `sha-<full-commit-sha>` tags.
+- Pushes of release tags such as `v1.0.0` publish that tag and a commit tag.
+- Pull requests targeting `main` build the image without publishing or registry login.
+- Manual runs from Actions → Build and publish runner image → Run workflow
+  publish only when run against `main` or a `v*` tag. Other branches only build.
+
+The registry path is derived from the GitHub repository name and converted to
+lowercase. For this repository it is `ghcr.io/sigmalko/github-runner-in-docker`.
+Authentication uses the automatic `GITHUB_TOKEN` with `packages: write`;
+no Personal Access Token or runner registration token is needed for publishing.
+Runner credentials remain runtime configuration and are excluded from the build
+context by `.dockerignore`.
+
+After the first publication, open the container package's **Package settings**
+on GitHub and change its visibility to **Public** to allow anonymous pulls.
+A public source repository does not automatically make a new GHCR package public.
+Once published and public, use the ready-image Compose commands above.
+
+See [GitHub's Docker image publishing guide](https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images)
+and [Container Registry documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
 
 ## Where to get RUNNER_TOKEN
 
@@ -177,7 +206,7 @@ docker run -d --name github-runner --restart unless-stopped --env-file .env -v g
 | RUNNER_ARCH | Build argument | x64 or arm64 |
 | RUNNER_SHA256 | Build argument | SHA-256 for the selected version and architecture |
 | RUNNER_URL | Environment variable | Repository or organization URL |
-| RUNNER_IMAGE | Compose interpolation variable | Optional override for compose.image.yaml; defaults to ghcr.io/sigmalko/githab-runner-in-docker:latest |
+| RUNNER_IMAGE | Compose interpolation variable | Optional override for compose.image.yaml; defaults to ghcr.io/sigmalko/github-runner-in-docker:latest |
 | RUNNER_TOKEN | Environment variable | Runner registration token |
 | RUNNER_TOKEN_FILE | Environment variable | Alternative path to a mounted file containing the token |
 | RUNNER_NAME | Environment variable | Defaults to the container hostname |
