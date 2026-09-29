@@ -48,6 +48,66 @@ If Docker requires administrator privileges, prefix the `docker` commands with
 `sudo`. On both systems, Compose mounts `/var/run/docker.sock` so the runner
 can build images using the host Docker daemon.
 
+## Choose a Compose image source
+
+Both options work on Windows with Docker Desktop in Linux containers mode and
+on Linux. They share runtime settings from `compose.common.yaml` and the same
+`runner-data` volume. Select one option per deployment.
+
+### Build locally
+
+The default `compose.yaml` builds the Dockerfile and tags it `github-runner:local`:
+
+```sh
+docker compose up -d --build
+docker compose logs -f runner
+```
+
+No published runner image is required. To pass custom build arguments:
+
+```sh
+docker compose build --build-arg RUNNER_VERSION=2.337.0 runner
+docker compose up -d --no-build
+```
+
+When changing the version or architecture, also supply the matching checksum
+and architecture arguments described in “Parameters”.
+
+### Use a published image
+
+`compose.image.yaml` defaults to this project's GitHub Container Registry image:
+
+```dotenv
+RUNNER_IMAGE=ghcr.io/sigmalko/githab-runner-in-docker:latest
+```
+
+You can optionally set `RUNNER_IMAGE` in `.env` to override the default with a
+version tag, digest, or another compatible image. The image is built from
+[this repository](https://github.com/sigmalko/githab-runner-in-docker).
+This setting is independent of `RUNNER_URL`, which identifies the repository
+accepting jobs and must be supplied by the user. The default reference must be
+published in GHCR before it can be pulled. Private images require registry login.
+
+Use `compose.image.yaml`, which contains no build configuration:
+
+```sh
+docker compose -f compose.image.yaml pull
+docker compose -f compose.image.yaml up -d --no-build
+docker compose -f compose.image.yaml logs -f runner
+```
+
+Use the same `-f compose.image.yaml` selection for subsequent `stop`, `start`,
+and `down` commands. Prefer a version tag or digest for predictable deployments.
+Pulling and recreating the container preserves the runner volume; it does not
+replace the runner installation already saved there.
+
+To switch modes, run the chosen mode's `up -d` command in the same directory
+with the same Compose project name. Compose updates the existing service and
+preserves its volume. Do not run both modes against the same registration at
+the same time. `compose.common.yaml` is a shared settings file, not a standalone
+deployment file. The Windows and Linux setup examples above use local building;
+replace their startup commands with the published-image commands when desired.
+
 ## Where to get RUNNER_TOKEN
 
 The source of `RUNNER_TOKEN` is the **self-hosted runner setup page in the target
@@ -117,6 +177,7 @@ docker run -d --name github-runner --restart unless-stopped --env-file .env -v g
 | RUNNER_ARCH | Build argument | x64 or arm64 |
 | RUNNER_SHA256 | Build argument | SHA-256 for the selected version and architecture |
 | RUNNER_URL | Environment variable | Repository or organization URL |
+| RUNNER_IMAGE | Compose interpolation variable | Optional override for compose.image.yaml; defaults to ghcr.io/sigmalko/githab-runner-in-docker:latest |
 | RUNNER_TOKEN | Environment variable | Runner registration token |
 | RUNNER_TOKEN_FILE | Environment variable | Alternative path to a mounted file containing the token |
 | RUNNER_NAME | Environment variable | Defaults to the container hostname |

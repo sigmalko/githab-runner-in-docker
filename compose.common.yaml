@@ -1,0 +1,8 @@
+services:
+  runner:
+    restart: unless-stopped
+    stop_grace_period: 2m
+    env_file: .env
+    volumes:
+      - runner-data:/runner
+      - /var/run/docker.sock:/var/run/docker.sock
