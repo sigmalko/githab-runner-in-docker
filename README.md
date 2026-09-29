@@ -23,7 +23,7 @@ See “Where to get RUNNER_TOKEN” below for detailed instructions.
 
 Useful links:
 
-- [Add a Linux x64 runner to sigmalko/lingmine — setup instructions and registration token](https://github.com/sigmalko/lingmine/settings/actions/runners/new?arch=x64&os=linux) (requires access to the repository settings).
+- Runner setup URL: `https://github.com/OWNER/REPOSITORY/settings/actions/runners/new?arch=x64&os=linux`. Replace `OWNER` and `REPOSITORY` with your own values (requires access to the repository settings).
 - [GitHub documentation: managing self-hosted runners](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners).
 
 ```powershell
