@@ -108,6 +108,35 @@ the same time. `compose.common.yaml` is a shared settings file, not a standalone
 deployment file. The Windows and Linux setup examples above use local building;
 replace their startup commands with the published-image commands when desired.
 
+## Publishing the image to GHCR
+
+The `Build and publish runner image` workflow builds the Dockerfile on
+GitHub-hosted Linux runners, so it does not depend on this self-hosted runner
+being available. It uses the Dockerfile defaults and publishes `linux/amd64`
+images, suitable for x86-64 Linux hosts and Docker Desktop using Linux containers.
+ARM64 publishing is not enabled by this workflow.
+
+- Pushes to `main` publish `latest` and `sha-<full-commit-sha>` tags.
+- Pushes of release tags such as `v1.0.0` publish that tag and a commit tag.
+- Pull requests targeting `main` build the image without publishing or registry login.
+- Manual runs from Actions → Build and publish runner image → Run workflow
+  publish only when run against `main` or a `v*` tag. Other branches only build.
+
+The registry path is derived from the GitHub repository name and converted to
+lowercase. For this repository it is `ghcr.io/sigmalko/githab-runner-in-docker`.
+Authentication uses the automatic `GITHUB_TOKEN` with `packages: write`;
+no Personal Access Token or runner registration token is needed for publishing.
+Runner credentials remain runtime configuration and are excluded from the build
+context by `.dockerignore`.
+
+After the first publication, open the container package's **Package settings**
+on GitHub and change its visibility to **Public** to allow anonymous pulls.
+A public source repository does not automatically make a new GHCR package public.
+Once published and public, use the ready-image Compose commands above.
+
+See [GitHub's Docker image publishing guide](https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images)
+and [Container Registry documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
+
 ## Where to get RUNNER_TOKEN
 
 The source of `RUNNER_TOKEN` is the **self-hosted runner setup page in the target
